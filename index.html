@@ -26,11 +26,11 @@
             <li><a href="#" onclick="mostrarTela('compra')">📦 Registrar Compra</a></li>
             <li><a href="#" onclick="mostrarTela('cliente')">👤 Cadastrar Cliente</a></li>
             <li><a href="#" onclick="mostrarTela('cupom')">🎟️ Cupons</a></li>
+            <li><a href="#" onclick="mostrarTela('vendasPagas')">📅 Vendas Pagas</a></li>
             <li><a href="#" onclick="mostrarTela('relatorio')">📈 Relatórios</a></li>
             <li><a href="#" onclick="logout()">🚪 Sair</a></li>
         </ul>
     </div>
-
 
     <div class="content" style="display: none;">
         <!-- Tela Inicial -->
@@ -116,6 +116,36 @@
             <p id="mensagem-cupom" class="mensagem-sucesso"></p>
         </div>
 
+        <!-- Tela Vendas Pagas -->
+        <div id="tela-vendasPagas" class="tela" style="display: none;">
+            <h2>Vendas Pagas</h2>
+            <form id="formVendasPagas">
+                <label>Nome do Cliente:</label>
+                <input type="text" id="nomeCliente" required>
+
+                <label>Modelo do Tênis:</label>
+                <input type="text" id="modeloTenis" required>
+
+                <label>Valor a Pagar (R$):</label>
+                <input type="number" id="valorPagar" required>
+
+                <label>Valor Já Pago (R$):</label>
+                <input type="number" id="valorJaPago" required>
+
+                <label>Parcelas:</label>
+                <input type="number" id="parcelas" required>
+
+                <label>Status:</label>
+                <select id="statusPagamento" required>
+                    <option value="Pago">Pago</option>
+                    <option value="Não Pago">Não Pago</option>
+                </select>
+
+                <button type="submit">Salvar Venda</button>
+            </form>
+        </div>
+
+
         <!-- Tela de Relatórios -->
         <div id="tela-relatorio" class="tela" style="display: none;">
             <h1>Relatórios</h1>
@@ -144,6 +174,11 @@
                     <button onclick="abrirRelatorioCupons()">Abrir Relatório</button>
                 </div>
 
+                <div class="rel-card" id="rel-vendas-pagas">
+                    <h2>Vendas Pagas</h2>
+                    <p>Total: <span id="total-vendas-pagas">0</span></p>
+                    <button onclick="abrirRelatorioVendasPagas()">Abrir Relatório</button>
+                </div>
 
             </div>
         </div>
@@ -214,305 +249,375 @@
             </table>
         </div>
 
+        <div id="tela-relVendasPagas" class="tela" style="display: none;">
+            <h2>Relatório - Vendas Pagas</h2>
+            <button onclick="mostrarTela('relatorio')">💙 Voltar</button>
+            <div class="relatorio-lista">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome do Cliente</th>
+                            <th>Modelo do Tênis</th>
+                            <th>Valor a Pagar</th>
+                            <th>Valor Já Pago</th>
+                            <th>Parcelas</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
 
-        <script type="module">
-            import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-            import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+                    <tbody id="tabelaVendasPagas">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-            const firebaseConfig = {
-                apiKey: "AIzaSyBMGu6xGnwL6db_VqHu65NiPQ0qGMNj4Og",
-                authDomain: "system-urbanizy.firebaseapp.com",
-                projectId: "system-urbanizy",
-                storageBucket: "system-urbanizy.firebasestorage.app",
-                messagingSenderId: "545539184066",
-                appId: "1:545539184066:web:f57d214079e136eddef25b"
-            };
 
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
 
-            window.login = function () {
-                const user = document.getElementById("user").value;
-                const password = document.getElementById("password").value;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-                if (user === "admin" && password === "1234") {
-                    document.querySelector(".login-container").style.display = "none";
-                    document.querySelector(".sidebar").style.display = "block";
-                    document.querySelector(".content").style.display = "block";
-                    window.mostrarTela("inicio");
-                } else {
-                    alert("Usuário ou senha inválidos!");
-                }
-            };
+        const firebaseConfig = {
+            apiKey: "AIzaSyBMGu6xGnwL6db_VqHu65NiPQ0qGMNj4Og",
+            authDomain: "system-urbanizy.firebaseapp.com",
+            projectId: "system-urbanizy",
+            storageBucket: "system-urbanizy.firebasestorage.app",
+            messagingSenderId: "545539184066",
+            appId: "1:545539184066:web:f57d214079e136eddef25b"
+        };
 
-            window.logout = function () {
-                location.reload();
-            };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            window.mostrarTela = function (nomeTela) {
-                document.querySelectorAll(".tela").forEach(tela => tela.style.display = "none");
-                const atual = document.getElementById(`tela-${nomeTela}`);
-                if (atual) atual.style.display = "block";
+        window.login = function () {
+            const user = document.getElementById("user").value;
+            const password = document.getElementById("password").value;
 
-                if (nomeTela === "venda") {
-                    const formVenda = document.getElementById("form-venda");
-                    if (formVenda) formVenda.onsubmit = window.salvarVenda;
-                }
+            if (user === "admin" && password === "1234") {
+                document.querySelector(".login-container").style.display = "none";
+                document.querySelector(".sidebar").style.display = "block";
+                document.querySelector(".content").style.display = "block";
+                window.mostrarTela("inicio");
+            } else {
+                alert("Usuário ou senha inválidos!");
+            }
+        };
 
-                if (nomeTela === "compra") {
-                    const formCompra = document.getElementById("form-compra");
-                    if (formCompra) formCompra.onsubmit = window.salvarCompra;
-                }
+        window.logout = function () {
+            location.reload();
+        };
 
-                if (nomeTela === "cliente") {
-                    const formCliente = document.getElementById("form-cliente");
-                    if (formCliente) formCliente.onsubmit = window.salvarCliente;
-                }
+        window.mostrarTela = function (nomeTela) {
+            document.querySelectorAll(".tela").forEach(tela => tela.style.display = "none");
+            const atual = document.getElementById(`tela-${nomeTela}`);
+            if (atual) atual.style.display = "block";
 
-                if (nomeTela === "cupom") {
-                    const formCupom = document.getElementById("form-cupom");
-                    if (formCupom) formCupom.onsubmit = window.salvarCupom;
-                }
+            if (nomeTela === "venda") {
+                const formVenda = document.getElementById("form-venda");
+                if (formVenda) formVenda.onsubmit = window.salvarVenda;
+            }
 
-                if (nomeTela === "relatorio") {
-                    window.atualizarRelatorios();
+            if (nomeTela === "compra") {
+                const formCompra = document.getElementById("form-compra");
+                if (formCompra) formCompra.onsubmit = window.salvarCompra;
+            }
 
-                }
-            };
+            if (nomeTela === "cliente") {
+                const formCliente = document.getElementById("form-cliente");
+                if (formCliente) formCliente.onsubmit = window.salvarCliente;
+            }
 
-            // CLIENTES
-            const clientesSnap = await getDocs(collection(db, "clientes"));
-            document.getElementById("total-clientes").textContent = clientesSnap.size;
+            if (nomeTela === "cupom") {
+                const formCupom = document.getElementById("form-cupom");
+                if (formCupom) formCupom.onsubmit = window.salvarCupom;
+            }
 
-            window.salvarVenda = async function (event) {
-                event.preventDefault();
-                const cliente = document.getElementById("cliente-venda").value;
-                const produto = document.getElementById("produto-venda").value;
-                const valor = parseFloat(document.getElementById("valor-venda").value);
-                const data = document.getElementById("data-venda").value;
+            if (nomeTela === "relatorio") {
+                window.atualizarRelatorios();
 
-                try {
-                    await addDoc(collection(db, "vendas"), { cliente, produto, valor, data });
-                    document.getElementById("mensagem-venda").textContent = "Venda salva com sucesso!";
-                    event.target.reset();
-                } catch (e) {
-                    console.error("Erro ao salvar venda:", e);
-                    alert("Erro ao salvar venda.");
-                }
-            };
+            }
 
-            window.atualizarRelatorios = async function () {
-                let totalVendas = 0;
+            if (nomeTela === "vendasPagas") {
+                const form = document.getElementById("formVendasPagas");
+                if (form) form.onsubmit = window.salvarVendaPaga;
+            }
+
+        };
+
+        // CLIENTES
+        const clientesSnap = await getDocs(collection(db, "clientes"));
+        document.getElementById("total-clientes").textContent = clientesSnap.size;
+
+        window.salvarVenda = async function (event) {
+            event.preventDefault();
+            const cliente = document.getElementById("cliente-venda").value;
+            const produto = document.getElementById("produto-venda").value;
+            const valor = parseFloat(document.getElementById("valor-venda").value);
+            const data = document.getElementById("data-venda").value;
+
+            try {
+                await addDoc(collection(db, "vendas"), { cliente, produto, valor, data });
+                document.getElementById("mensagem-venda").textContent = "Venda salva com sucesso!";
+                event.target.reset();
+            } catch (e) {
+                console.error("Erro ao salvar venda:", e);
+                alert("Erro ao salvar venda.");
+            }
+        };
+
+        window.atualizarRelatorios = async function () {
+            let totalVendas = 0;
+            const snapshot = await getDocs(collection(db, "vendas"));
+            snapshot.forEach(doc => {
+                const venda = doc.data();
+                totalVendas += parseFloat(venda.valor || 0);
+            });
+            document.getElementById("total-vendas").textContent = totalVendas.toFixed(2);
+        };
+
+        // VENDAS PAGAS
+        let totalPagas = 0;
+        const vendasPagasSnap = await getDocs(collection(db, "vendasPagas"));
+        vendasPagasSnap.forEach(doc => {
+            const v = doc.data();
+            totalPagas += parseFloat(v.valor || 0);
+        });
+        document.getElementById("total-vendas-pagas").textContent = totalPagas.toFixed(2);
+
+
+        window.abrirRelatorioVendas = async function () {
+            mostrarTela('relatorio-vendas');
+            const corpo = document.getElementById("tabela-relatorio-vendas");
+            corpo.innerHTML = "";
+
+            try {
                 const snapshot = await getDocs(collection(db, "vendas"));
-                snapshot.forEach(doc => {
+                snapshot.forEach((doc) => {
                     const venda = doc.data();
-                    totalVendas += parseFloat(venda.valor || 0);
-                });
-                document.getElementById("total-vendas").textContent = totalVendas.toFixed(2);
-            };
-
-            window.abrirRelatorioVendas = async function () {
-                mostrarTela('relatorio-vendas');
-                const corpo = document.getElementById("tabela-relatorio-vendas");
-                corpo.innerHTML = "";
-
-                try {
-                    const snapshot = await getDocs(collection(db, "vendas"));
-                    snapshot.forEach((doc) => {
-                        const venda = doc.data();
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
                 <td>${venda.cliente}</td>
                 <td>${venda.produto}</td>
                 <td>${parseFloat(venda.valor).toFixed(2)}</td>
                 <td>${venda.data}</td>
                 <td><button onclick="excluirDocumento('vendas', '${doc.id}', abrirRelatorioVendas)">🗑️</button></td>
             `;
-                        corpo.appendChild(tr);
-                    });
-                } catch (e) {
-                    console.error("Erro ao buscar vendas:", e);
-                }
-            };
+                    corpo.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Erro ao buscar vendas:", e);
+            }
+        };
 
-            // SALVAR COMPRA
-            window.salvarCompra = async function (event) {
-                event.preventDefault();
-                const fornecedor = document.getElementById("fornecedor").value;
-                const produto = document.getElementById("produto-compra").value;
-                const quantidade = parseInt(document.getElementById("quantidade-compra").value);
-                const valor = parseFloat(document.getElementById("valor-compra").value);
-                const data = document.getElementById("data-compra").value;
+        // SALVAR COMPRA
+        window.salvarCompra = async function (event) {
+            event.preventDefault();
+            const fornecedor = document.getElementById("fornecedor").value;
+            const produto = document.getElementById("produto-compra").value;
+            const quantidade = parseInt(document.getElementById("quantidade-compra").value);
+            const valor = parseFloat(document.getElementById("valor-compra").value);
+            const data = document.getElementById("data-compra").value;
 
-                try {
-                    await addDoc(collection(db, "compras"), { fornecedor, produto, quantidade, valor, data });
-                    document.getElementById("mensagem-compra").textContent = "Compra salva com sucesso!";
-                    event.target.reset();
-                } catch (e) {
-                    console.error("Erro ao salvar compra:", e);
-                    alert("Erro ao salvar compra.");
-                }
-            };
+            try {
+                await addDoc(collection(db, "compras"), { fornecedor, produto, quantidade, valor, data });
+                document.getElementById("mensagem-compra").textContent = "Compra salva com sucesso!";
+                event.target.reset();
+            } catch (e) {
+                console.error("Erro ao salvar compra:", e);
+                alert("Erro ao salvar compra.");
+            }
+        };
 
-            // RELATÓRIO COMPLETO DE COMPRAS
-            window.abrirRelatorioCompras = async function () {
-                mostrarTela('relatorio-compras');
-                const corpo = document.getElementById("tabela-relatorio-compras");
-                corpo.innerHTML = "";
+        // RELATÓRIO COMPLETO DE COMPRAS
+        window.abrirRelatorioCompras = async function () {
+            mostrarTela('relatorio-compras');
+            const corpo = document.getElementById("tabela-relatorio-compras");
+            corpo.innerHTML = "";
 
-                try {
-                    const snapshot = await getDocs(collection(db, "compras"));
-                    snapshot.forEach((doc) => {
-                        const compra = doc.data();
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
+            try {
+                const snapshot = await getDocs(collection(db, "compras"));
+                snapshot.forEach((doc) => {
+                    const compra = doc.data();
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
                 <td>${compra.fornecedor}</td>
                 <td>${compra.produto}</td>
                 <td>${compra.quantidade}</td>
                 <td>${parseFloat(compra.valor).toFixed(2)}</td>
                 <td>${compra.data}</td>
             `;
-                        corpo.appendChild(tr);
-                    });
-                } catch (e) {
-                    console.error("Erro ao buscar compras:", e);
-                }
-            };
-
-            // ATUALIZAR RELATÓRIO (incluindo total de compras)
-            window.atualizarRelatorios = async function () {
-                // VENDAS
-                let totalVendas = 0;
-                const vendasSnap = await getDocs(collection(db, "vendas"));
-                vendasSnap.forEach(doc => {
-                    const venda = doc.data();
-                    totalVendas += parseFloat(venda.valor || 0);
+                    corpo.appendChild(tr);
                 });
-                document.getElementById("total-vendas").textContent = totalVendas.toFixed(2);
+            } catch (e) {
+                console.error("Erro ao buscar compras:", e);
+            }
+        };
 
-                // COMPRAS
-                let totalCompras = 0;
-                const comprasSnap = await getDocs(collection(db, "compras"));
-                comprasSnap.forEach(doc => {
-                    const compra = doc.data();
-                    totalCompras += parseFloat(compra.valor || 0);
-                });
-                document.getElementById("total-compras").textContent = totalCompras.toFixed(2);
-            };
+        // ATUALIZAR RELATÓRIO (incluindo total de compras)
+        window.atualizarRelatorios = async function () {
+            // VENDAS
+            let totalVendas = 0;
+            const vendasSnap = await getDocs(collection(db, "vendas"));
+            vendasSnap.forEach(doc => {
+                const venda = doc.data();
+                totalVendas += parseFloat(venda.valor || 0);
+            });
+            document.getElementById("total-vendas").textContent = totalVendas.toFixed(2);
 
-            window.salvarCliente = async function (event) {
-                event.preventDefault();
-                const nome = document.getElementById("nome").value;
-                const produto = document.getElementById("produto").value;
-                const telefone = document.getElementById("telefone").value;
+            // COMPRAS
+            let totalCompras = 0;
+            const comprasSnap = await getDocs(collection(db, "compras"));
+            comprasSnap.forEach(doc => {
+                const compra = doc.data();
+                totalCompras += parseFloat(compra.valor || 0);
+            });
+            document.getElementById("total-compras").textContent = totalCompras.toFixed(2);
+        };
 
-                try {
-                    await addDoc(collection(db, "clientes"), { nome, produto, telefone });
-                    document.getElementById("mensagem-sucesso").textContent = "Cliente salvo com sucesso!";
-                    event.target.reset();
-                } catch (e) {
-                    console.error("Erro ao salvar cliente:", e);
-                    alert("Erro ao salvar cliente.");
-                }
-            };
+        window.salvarCliente = async function (event) {
+            event.preventDefault();
+            const nome = document.getElementById("nome").value;
+            const produto = document.getElementById("produto").value;
+            const telefone = document.getElementById("telefone").value;
 
-            window.abrirRelatorioClientes = async function () {
-                mostrarTela('relatorio-clientes');
-                const corpo = document.getElementById("tabela-relatorio-clientes");
-                corpo.innerHTML = "";
+            try {
+                await addDoc(collection(db, "clientes"), { nome, produto, telefone });
+                document.getElementById("mensagem-sucesso").textContent = "Cliente salvo com sucesso!";
+                event.target.reset();
+            } catch (e) {
+                console.error("Erro ao salvar cliente:", e);
+                alert("Erro ao salvar cliente.");
+            }
+        };
 
-                try {
-                    const snapshot = await getDocs(collection(db, "clientes"));
-                    snapshot.forEach((doc) => {
-                        const cliente = doc.data();
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
+        window.abrirRelatorioClientes = async function () {
+            mostrarTela('relatorio-clientes');
+            const corpo = document.getElementById("tabela-relatorio-clientes");
+            corpo.innerHTML = "";
+
+            try {
+                const snapshot = await getDocs(collection(db, "clientes"));
+                snapshot.forEach((doc) => {
+                    const cliente = doc.data();
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
                 <td>${cliente.nome}</td>
                 <td>${cliente.produto}</td>
                 <td>${cliente.telefone}</td>
             `;
-                        corpo.appendChild(tr);
-                    });
-                } catch (e) {
-                    console.error("Erro ao buscar clientes:", e);
-                }
-            };
+                    corpo.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Erro ao buscar clientes:", e);
+            }
+        };
 
-            window.abrirRelatorioCupons = async function () {
-                mostrarTela('relatorio-cupons');
-                const corpo = document.getElementById("tabela-relatorio-cupons");
-                corpo.innerHTML = "";
+        window.abrirRelatorioCupons = async function () {
+            mostrarTela('relatorio-cupons');
+            const corpo = document.getElementById("tabela-relatorio-cupons");
+            corpo.innerHTML = "";
 
-                try {
-                    const snapshot = await getDocs(collection(db, "cupons"));
-                    snapshot.forEach((doc) => {
-                        const cupom = doc.data();
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
+            try {
+                const snapshot = await getDocs(collection(db, "cupons"));
+                snapshot.forEach((doc) => {
+                    const cupom = doc.data();
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
                 <td>${cupom.cliente}</td>
                 <td>${cupom.nome}</td>
                 <td>${cupom.desconto}</td>
                 <td>${cupom.validade}</td>
             `;
-                        corpo.appendChild(tr);
-                    });
-                } catch (e) {
-                    console.error("Erro ao buscar cupons:", e);
-                }
-            };
+                    corpo.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Erro ao buscar cupons:", e);
+            }
+        };
 
-            // CUPONS
-            let totalCupons = 0;
-            const cuponsSnap = await getDocs(collection(db, "cupons"));
-            cuponsSnap.forEach(() => totalCupons++);
-            document.getElementById("total-cupons").textContent = totalCupons;
+        window.abrirRelatorioVendasPagas = async function () {
+            mostrarTela('relVendasPagas');
+            const corpo = document.getElementById("tabelaVendasPagas");
+            corpo.innerHTML = "";
 
-            window.salvarCupom = async function (event) {
-                event.preventDefault();
+            try {
+                const snapshot = await getDocs(collection(db, "vendasPagas"));
+                snapshot.forEach((doc) => {
+                    const v = doc.data();
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                <td>${v.nome}</td>
+                <td>${v.modelo}</td>
+                <td>R$ ${parseFloat(v.valor).toFixed(2)}</td>
+                <td>R$ ${parseFloat(v.valorJaPago || 0).toFixed(2)}</td>
+                <td>${v.parcelas}x</td>
+                <td><strong style="color:${v.status === 'Pago' ? 'green' : 'red'}">${v.status}</strong></td>
+                <td><button onclick="excluirDocumento('vendasPagas', '${doc.id}', abrirRelatorioVendasPagas)">🗑️</button></td>
+            `;
+                    corpo.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Erro ao buscar vendas pagas:", e);
+            }
+        };
 
-                const cliente = document.getElementById("cliente-cupom").value;
-                const nome = document.getElementById("nome-cupom").value;
-                const desconto = parseInt(document.getElementById("desconto-cupom").value);
-                const validade = document.getElementById("validade-cupom").value;
 
+
+        // CUPONS
+        let totalCupons = 0;
+        const cuponsSnap = await getDocs(collection(db, "cupons"));
+        cuponsSnap.forEach(() => totalCupons++);
+        document.getElementById("total-cupons").textContent = totalCupons;
+
+        window.salvarCupom = async function (event) {
+            event.preventDefault();
+
+            const cliente = document.getElementById("cliente-cupom").value;
+            const nome = document.getElementById("nome-cupom").value;
+            const desconto = parseInt(document.getElementById("desconto-cupom").value);
+            const validade = document.getElementById("validade-cupom").value;
+
+            try {
+                await addDoc(collection(db, "cupons"), { cliente, nome, desconto, validade });
+                document.getElementById("mensagem-cupom").textContent = "Cupom gerado com sucesso!";
+                event.target.reset();
+            } catch (e) {
+                console.error("Erro ao salvar cupom:", e);
+                alert("Erro ao salvar cupom.");
+            }
+        };
+
+        import { deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+
+        window.excluirDocumento = async function (colecao, id, callback) {
+            if (confirm("Tem certeza que deseja excluir este item?")) {
                 try {
-                    await addDoc(collection(db, "cupons"), { cliente, nome, desconto, validade });
-                    document.getElementById("mensagem-cupom").textContent = "Cupom gerado com sucesso!";
-                    event.target.reset();
+                    await deleteDoc(doc(db, colecao, id));
+                    alert("Item excluído com sucesso!");
+                    if (typeof callback === 'function') callback();
+                    window.atualizarRelatorios();
                 } catch (e) {
-                    console.error("Erro ao salvar cupom:", e);
-                    alert("Erro ao salvar cupom.");
+                    console.error("Erro ao excluir documento:", e);
+                    alert("Erro ao excluir item.");
                 }
-            };
+            }
+        };
 
-            import { deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
+        window.abrirRelatorioCompras = async function () {
+            mostrarTela('relatorio-compras');
+            const corpo = document.getElementById("tabela-relatorio-compras");
+            corpo.innerHTML = "";
 
-            window.excluirDocumento = async function (colecao, id, callback) {
-                if (confirm("Tem certeza que deseja excluir este item?")) {
-                    try {
-                        await deleteDoc(doc(db, colecao, id));
-                        alert("Item excluído com sucesso!");
-                        if (typeof callback === 'function') callback();
-                        window.atualizarRelatorios();
-                    } catch (e) {
-                        console.error("Erro ao excluir documento:", e);
-                        alert("Erro ao excluir item.");
-                    }
-                }
-            };
-
-            window.abrirRelatorioCompras = async function () {
-                mostrarTela('relatorio-compras');
-                const corpo = document.getElementById("tabela-relatorio-compras");
-                corpo.innerHTML = "";
-
-                try {
-                    const snapshot = await getDocs(collection(db, "compras"));
-                    snapshot.forEach((doc) => {
-                        const compra = doc.data();
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
+            try {
+                const snapshot = await getDocs(collection(db, "compras"));
+                snapshot.forEach((doc) => {
+                    const compra = doc.data();
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
                         <td>${compra.fornecedor}</td>
                         <td>${compra.produto}</td>
                         <td>${compra.quantidade}</td>
@@ -520,64 +625,92 @@
                         <td>${compra.data}</td>
                         <td><button onclick="excluirDocumento('compras', '${doc.id}', abrirRelatorioCompras)">🗑️</button></td>
                     `;
-                        corpo.appendChild(tr);
-                    });
-                } catch (e) {
-                    console.error("Erro ao buscar compras:", e);
-                }
-            };
+                    corpo.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Erro ao buscar compras:", e);
+            }
+        };
 
-            window.abrirRelatorioClientes = async function () {
-                mostrarTela('relatorio-clientes');
-                const corpo = document.getElementById("tabela-relatorio-clientes");
-                corpo.innerHTML = "";
+        window.abrirRelatorioClientes = async function () {
+            mostrarTela('relatorio-clientes');
+            const corpo = document.getElementById("tabela-relatorio-clientes");
+            corpo.innerHTML = "";
 
-                try {
-                    const snapshot = await getDocs(collection(db, "clientes"));
-                    snapshot.forEach((doc) => {
-                        const cliente = doc.data();
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
+            try {
+                const snapshot = await getDocs(collection(db, "clientes"));
+                snapshot.forEach((doc) => {
+                    const cliente = doc.data();
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
                 <td>${cliente.nome}</td>
                 <td>${cliente.produto}</td>
                 <td>${cliente.telefone}</td>
                 <td><button onclick="excluirDocumento('clientes', '${doc.id}', abrirRelatorioClientes)">🗑️</button></td>
             `;
-                        corpo.appendChild(tr);
-                    });
-                } catch (e) {
-                    console.error("Erro ao buscar clientes:", e);
-                }
-            };
+                    corpo.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Erro ao buscar clientes:", e);
+            }
+        };
 
-            window.abrirRelatorioCupons = async function () {
-                mostrarTela('relatorio-cupons');
-                const corpo = document.getElementById("tabela-relatorio-cupons");
-                corpo.innerHTML = "";
+        window.abrirRelatorioCupons = async function () {
+            mostrarTela('relatorio-cupons');
+            const corpo = document.getElementById("tabela-relatorio-cupons");
+            corpo.innerHTML = "";
 
-                try {
-                    const snapshot = await getDocs(collection(db, "cupons"));
-                    snapshot.forEach((doc) => {
-                        const cupom = doc.data();
-                        const tr = document.createElement("tr");
-                        tr.innerHTML = `
+            try {
+                const snapshot = await getDocs(collection(db, "cupons"));
+                snapshot.forEach((doc) => {
+                    const cupom = doc.data();
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
                 <td>${cupom.cliente}</td>
                 <td>${cupom.nome}</td>
                 <td>${cupom.desconto}</td>
                 <td>${cupom.validade}</td>
                 <td><button onclick="excluirDocumento('cupons', '${doc.id}', abrirRelatorioCupons)">🗑️</button></td>
             `;
-                        corpo.appendChild(tr);
-                    });
-                } catch (e) {
-                    console.error("Erro ao buscar cupons:", e);
-                }
-            };
+                    corpo.appendChild(tr);
+                });
+            } catch (e) {
+                console.error("Erro ao buscar cupons:", e);
+            }
+        };
+
+window.salvarVendaPaga = async function (event) {
+    event.preventDefault();
+
+    const nome = document.getElementById("nomeCliente").value;
+    const modelo = document.getElementById("modeloTenis").value;
+    const valor = parseFloat(document.getElementById("valorPagar").value);
+    const valorJaPago = parseFloat(document.getElementById("valorJaPago").value); // <- aqui está o erro original
+    const parcelas = document.getElementById("parcelas").value;
+    const status = document.getElementById("statusPagamento").value;
+
+    try {
+        await addDoc(collection(db, "vendasPagas"), {
+            nome,
+            modelo,
+            valor,
+            valorJaPago, // <- este campo precisa estar salvo no banco
+            parcelas,
+            status
+        });
+
+        alert("Venda paga salva com sucesso!");
+        event.target.reset();
+    } catch (e) {
+        console.error("Erro ao salvar venda paga:", e);
+        alert("Erro ao salvar venda.");
+    }
+};
 
 
 
 
-        </script>
+    </script>
 </body>
 
 </html>
