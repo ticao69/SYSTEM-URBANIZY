@@ -6,6 +6,13 @@ body {
   color: white;
 }
 
+.logo{
+  display: flex;
+  width: 230px;
+margin-top: 20px;
+padding-bottom: 35px;
+}
+
 .login-container {
   background: #2a2a2a;
   padding: 30px;
@@ -82,6 +89,8 @@ button:hover {
   padding: 40px;
   width: calc(100% - 260px);
   display: none;
+  height: 100vh;
+  
 }
 
 .inicio-box {
@@ -91,6 +100,9 @@ button:hover {
   max-width: 700px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
   color: #000;
+  margin: 120px auto; /* Centraliza horizontal e dá espaço superior */
+  text-align: center; /* Centraliza o texto */
+
 }
 
 form {
@@ -169,4 +181,12 @@ form input {
 .relatorio-lista th {
   background-color: #6a0dad;
   color: #fff;
+}
+
+select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
 }
